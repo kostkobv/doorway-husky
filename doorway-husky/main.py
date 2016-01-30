@@ -5,11 +5,20 @@ API_SECRET = 'juj9gwefJdIjMeD6'
 
 
 def main():
-    linked = LinkedinMan(api_key=API_KEY, api_secret=API_SECRET)
-    linked.authentication()
+    linkedin_man = get_linkedin()
+    linkedin_man.find_profile(first_name='Bohdan', last_name='Kostko')
 
-    app = linked.get_app()
 
+def get_linkedin():
+    """
+    Authenticates and returns the ready for making requests to API LinkedinMan instance
+
+    :return: linkedin app
+    """
+    linkedin_man = LinkedinMan(api_key=API_KEY, api_secret=API_SECRET)
+    linkedin_man.authentication()
+
+    return linkedin_man
 
 if __name__ == '__main__':
     main()

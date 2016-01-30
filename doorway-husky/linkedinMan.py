@@ -11,6 +11,8 @@ class LinkedinMan(object):
         inside off app
     """
 
+    PERMISSIONS = ['r_network']
+
     SERVER_PORT = 4567
     SERVER_HOST = 'localhost'
     RETURN_URL = "http://%s:%s/" % (SERVER_HOST, SERVER_PORT)
@@ -27,14 +29,13 @@ class LinkedinMan(object):
         if not (api_key or api_secret):
             raise NameError('No API key or secret provided')
 
-        self.server = make_server(self.SERVER_HOST, self.SERVER_PORT, self.catch_answer)
-        self.token = None
-        self.auth = None
+        self._server = make_server(self.SERVER_HOST, self.SERVER_PORT, self._catch_answer)
+        self._token = None
         self.app = None
 
-        self.auth = linkedin.LinkedInAuthentication(api_key, api_secret, self.RETURN_URL)
+        self._auth = linkedin.LinkedInAuthentication(api_key, api_secret, self.RETURN_URL, self.PERMISSIONS)
 
-    def set_app_from_auth_code(self, code):
+    def _set_app_from_auth_code(self, code):
         """
         Creating app to make requests to linkedin API
 
@@ -42,12 +43,12 @@ class LinkedinMan(object):
         :return: app
         """
 
-        token = self.set_token_from_code(code)
-        self.app = linkedin.LinkedInApplication(token)
+        token = self._set_token_from_code(code)
+        self.app = linkedin.LinkedInApplication(token=token)
 
         print 'Got app. Ready to make requests to API.\n'
 
-    def catch_answer(self, environ, start_response):
+    def _catch_answer(self, environ, start_response):
         """
         Function that handles the requests from linkedin after authentication
 
@@ -57,15 +58,15 @@ class LinkedinMan(object):
         """
 
         params = parse_qs(environ.get('QUERY_STRING', ''))
-        code = self.parse_code(params)
+        code = self._parse_code(params)
 
-        self.set_app_from_auth_code(code)
+        self._set_app_from_auth_code(code)
 
         start_response('200 OK', [('Content-type', 'text/plain')])
 
         return 'Such WOW\nNow proceeding. You can close me!'
 
-    def set_token_from_code(self, code):
+    def _set_token_from_code(self, code):
         """
         Sets token based on auth code returned by linkedin
 
@@ -74,15 +75,15 @@ class LinkedinMan(object):
         """
         print 'Got code. Code is %s\n' % code
 
-        self.auth.authorization_code = code
-        token = self.auth.get_access_token().access_token
+        self._auth.authorization_code = code
+        token = self._auth.get_access_token().access_token
 
         print 'Got token. Token is %s\n' % token
 
         return token
 
     @staticmethod
-    def parse_code(params):
+    def _parse_code(params):
         """
         Gets auth code from linkedin response. Raises error if there is no code in response.
 
@@ -100,9 +101,9 @@ class LinkedinMan(object):
         Then sets up simple server to catch response from linkedin.
         """
 
-        webbrowser.open(self.auth.authorization_url)
+        webbrowser.open(self._auth.authorization_url)
 
-        self.server.handle_request()
+        self._server.handle_request()
 
     def get_app(self):
         """
@@ -111,3 +112,15 @@ class LinkedinMan(object):
         :return: linkedin app to make requests
         """
         return self.app
+
+    def find_profile(self, first_name=None, last_name=None, company=None, position=None):
+        if not self.app:
+            raise NameError('Please authenticate first')
+
+        results = self.app.search_profile(selectors=[
+                {'people': ['id', 'first-name', 'last-name', 'headline']}
+            ],
+            params={'first-name': first_name, 'last-name': last_name}
+        )
+
+        print results
