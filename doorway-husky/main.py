@@ -1,12 +1,8 @@
 from linkedinMan import LinkedinMan
 
-API_KEY = '77advieyqqgu6l'
-API_SECRET = 'juj9gwefJdIjMeD6'
-
-
 def main():
     linkedin_man = get_linkedin()
-    linkedin_man.find_profile(first_name='Bohdan', last_name='Kostko')
+    linkedin_man.find_profile(first_name='Test1', last_name='Test2')
 
 
 def get_linkedin():
